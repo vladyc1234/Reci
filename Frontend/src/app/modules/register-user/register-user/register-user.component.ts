@@ -16,7 +16,7 @@ export class RegisterUserComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    window.location.reload();
+
   }
 
   public createForm: FormGroup = new FormGroup({

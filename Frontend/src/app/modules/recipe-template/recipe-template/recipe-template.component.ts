@@ -75,7 +75,7 @@ export class RecipeTemplateComponent implements OnInit{
       }
     );
 
-
+    console.log(this.dataSource.data);
   }
 
   

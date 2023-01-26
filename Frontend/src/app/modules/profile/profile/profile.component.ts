@@ -42,7 +42,6 @@ export class ProfileComponent implements OnInit {
     this.recipeService.GetAllRecipes().subscribe(
       (result) => {
         let i = 0;
-
         for (let j = 0; j < result.length; j++) {
           if (result[j].idUser == this.idUser) {
             this.dataSource.data[i] = { name: "", id: 0 };
@@ -89,7 +88,6 @@ export class ProfileComponent implements OnInit {
     this.recipeService.GetAllLibrariesById(this.idUser).subscribe(
       (result3) => {
         let i = 0;
-
         for (let j = 0; j < result3.length; j++) {
           this.recipeService.GetRecipeById(result3[j].idRecipe).subscribe(
             (check) => {
@@ -123,6 +121,7 @@ export class ProfileComponent implements OnInit {
 
   public save(id: string): void {
     localStorage.setItem('link_id', id);
+    console.log(id);
   }
 
   public del(): void {
@@ -131,106 +130,100 @@ export class ProfileComponent implements OnInit {
 
   public push(id: string): void {
 
-    
-
     this.recipeService.GetDerivedRecipeById(id).subscribe(
-      (result) => {
-        let recipeName = result.name.split("-derived");
+      (derivedRecipe) => {
+        let recipeName = derivedRecipe.name.split("-derived");
 
-        this.recipeToCreate = new Recipe(recipeName[0], result.derivedRecipeFile, parseInt(this.idUser));
+        this.recipeToCreate = new Recipe(recipeName[0], derivedRecipe.derivedRecipeFile, parseInt(this.idUser));
 
         this.recipeService.CreateRecipe(this.recipeToCreate).subscribe(
-          data => {
-            localStorage.setItem('idRecipeToCreate', data.id);
+          (idRecipeToCreate) => {
+
+            this.recipeService.GetAllDerivedTagsById(derivedRecipe.id).subscribe(
+              (resultDerivedTags) => {
+                for (let i = 0; i < resultDerivedTags.length; i++) {
+                  let tag = new RecipeTag(resultDerivedTags[i].nameTag, parseInt(idRecipeToCreate.id));
+                  this.recipeService.CreateRecipeTag(tag).subscribe(
+                    (error) => {
+                      console.log(error);
+                    }
+                  )
+                }
+              },
+              (error) => {
+                console.log(error);
+              }
+            )
+        
+            this.recipeService.GetAllRecipeTagsById(derivedRecipe.idRecipe).subscribe(
+              (resultRecipeTags) => {
+                for (let i = 0; i < resultRecipeTags.length; i++) {
+                  let tag = new RecipeTag(resultRecipeTags[i].nameTag, parseInt(idRecipeToCreate.id));
+                  this.recipeService.CreateRecipeTag(tag).subscribe(
+                    (data) => {
+                    },
+                    (error) => {
+                      console.log(error);
+                    }
+                  )
+                }
+              },
+              (error) => {
+                console.log(error);
+              }
+            )
+            this.recipeService.GetAllCookedWithsById(derivedRecipe.idRecipe).subscribe(
+              (resultUtensils) => {
+                for (let i = 0; i < resultUtensils.length; i++) {
+                  let utensil = new CookedWith(resultUtensils[i].name, parseInt(idRecipeToCreate.id));
+                  this.recipeService.CreateCookedWith(utensil).subscribe(
+                    (data) => {
+                    },
+                    (error) => {
+                      console.log(error);
+                    }
+                  )
+                }
+              },
+              (error) => {
+                console.log(error);
+              }
+            )
+            this.recipeService.GetAllMadeWithsById(derivedRecipe.idRecipe).subscribe(
+              (resultIngredients) => {
+                for (let i = 0; i < resultIngredients.length; i++) {
+                  let ingredient = new MadeWith(resultIngredients[i].name, parseInt(idRecipeToCreate.id));
+                  this.recipeService.CreateMadeWith(ingredient).subscribe(
+                    (data) => {
+                      if(i == resultIngredients.length - 1) {
+                        this.recipeService.DeleteDerivedRecipeById(id).subscribe(
+                          (error) => {
+                            console.log(error);
+                          }
+                        )
+
+                        window.location.reload();
+                      }
+                    },
+                    (error) => {
+                      console.log(error);
+                    }
+                  )
+                }
+              },
+              (error) => {
+                console.log(error);
+              }
+            )
           }
         )
-        
-        localStorage.setItem('idOriginalRecipe', result.idRecipe);
-
       },
       (error) => {
         console.log(error);
       }
     )
 
-    let idOriginalRecipe = localStorage.getItem("idOriginalRecipe") || '1';
-    let idRecipeToCreate = localStorage.getItem("idRecipeToCreate") || '1';
-
-    this.recipeService.GetAllDerivedTagsById(idOriginalRecipe).subscribe(
-      (resultDerivedTags) => {
-        for (let i = 0; i < resultDerivedTags.length; i++) {
-          let tag = new RecipeTag(resultDerivedTags[i].nameTag, parseInt(idRecipeToCreate) + 1);
-          this.recipeService.CreateRecipeTag(tag).subscribe(
-            (error) => {
-              console.log(error);
-            }
-          )
-        }
-      },
-      (error) => {
-        console.log(error);
-      }
-    )
-
-    this.recipeService.GetAllRecipeTagsById(idOriginalRecipe).subscribe(
-      (resultRecipeTags) => {
-        for (let i = 0; i < resultRecipeTags.length; i++) {
-          let tag = new RecipeTag(resultRecipeTags[i].nameTag, parseInt(idRecipeToCreate) + 1);
-          this.recipeService.CreateRecipeTag(tag).subscribe(
-            (data) => {
-            },
-            (error) => {
-              console.log(error);
-            }
-          )
-        }
-      },
-      (error) => {
-        console.log(error);
-      }
-    )
-    this.recipeService.GetAllCookedWithsById(idOriginalRecipe).subscribe(
-      (resultUtensils) => {
-        for (let i = 0; i < resultUtensils.length; i++) {
-          let utensil = new CookedWith(resultUtensils[i].name, parseInt(idRecipeToCreate) + 1);
-          this.recipeService.CreateCookedWith(utensil).subscribe(
-            (data) => {
-            },
-            (error) => {
-              console.log(error);
-            }
-          )
-        }
-      },
-      (error) => {
-        console.log(error);
-      }
-    )
-    this.recipeService.GetAllMadeWithsById(idOriginalRecipe).subscribe(
-      (resultIngredients) => {
-        for (let i = 0; i < resultIngredients.length; i++) {
-          let ingredient = new MadeWith(resultIngredients[i].name, parseInt(idRecipeToCreate) + 1);
-          this.recipeService.CreateMadeWith(ingredient).subscribe(
-            (data) => {
-            },
-            (error) => {
-              console.log(error);
-            }
-          )
-        }
-      },
-      (error) => {
-        console.log(error);
-      }
-    )
-
-    // this.recipeService.DeleteDerivedRecipeById(id).subscribe(
-    //   (error) => {
-    //     console.log(error);
-    //   }
-    // )
-
-    // window.location.reload();
+    
   }
 }
 
